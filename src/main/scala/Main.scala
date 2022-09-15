@@ -1,15 +1,29 @@
 import zio._
-import zio.Console._
 import java.io.IOException
+import scala.io.AnsiColor._
 
-object Main extends ZIOAppDefault {
-  val program: ZIO[Console, IOException, Unit] =
+object ourConsole {
+  def printLine(line: String) = {
+    ZIO.succeed(println(line))
+  }
+
+  val readLine =
+    ZIO.succeed(scala.io.StdIn.readLine)
+}
+
+object Main extends scala.App {
+  val program =
     for (
-      _ <- Console.printLine("-" * 100);
-      _ <- Console.printLine("Hello World");
-      _ <- Console.printLine("-" * 100)
+      _ <- ourConsole.printLine("What is your name?");
+      name <- ourConsole.readLine;
+      _ <- ourConsole.printLine(s"Hello $name!")
     ) yield ()
 
-  def run: URIO[Any, ExitCode] =
-    program.exitCode
+  val runtime: Runtime[Any] = Runtime.default
+
+  Unsafe.unsafe { implicit unsafe =>
+    runtime.unsafe
+      .run(program)
+      .getOrThrowFiberFailure()
+  }
 }
