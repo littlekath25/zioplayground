@@ -4,6 +4,7 @@ build/
 .bloop/
 .bsp/
 .metals
+.metals/
 .cache
 .cache-main
 .classpath
@@ -13,6 +14,7 @@ build/
 .settings
 .worksheet
 .DS_Store
+.vscode/
 *.class
 *.tasty
 *.log
