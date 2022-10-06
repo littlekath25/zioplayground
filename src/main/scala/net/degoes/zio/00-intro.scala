@@ -1,20 +1,50 @@
 package understandzio
 
-import zio._
-case class User(name: String, email: String)
+import zio.{ExitCode, Has, Task, URIO, ZIO, ZLayer}
+import zio.console._
 
-object UserEmailer { // service
-  trait Service {
-    def notify(user: User, message: String): Task[Unit]
+object PlayGround extends zio.App {
+  case class User(name: String, email: String)
+
+  object UserMailer {
+    type UserMailerEnv = Has[UserMailer.Service]
+
+    trait Service {
+      def notify(user: User, message: String): Task[Unit]
+    }
+
+    val live: ZLayer[Any, Nothing, UserMailerEnv] = ZLayer.succeed(
+      new Service {
+        override def notify(user: User, message: String): Task[Unit] =
+          Task {
+            println(
+              s"[email mailer] Hello ${user.name}, welcome to our hourly newsletter!\n$message"
+            )
+          }
+      }
+    )
+
+    def notify(
+        user: User,
+        message: String
+    ): ZIO[UserMailerEnv, Throwable, Unit] =
+      ZIO.accessM(hasService => hasService.get.notify(user, message))
   }
 
-  val aServiceImpl = new Service {
-    override def notify(user: User, message: String): Task[Unit] = {
-      Task {
-        println(s"Sending '$message' to ${user.email}")
-      }
+  object UserDB {
+    trait Service {
+      def insert(user: User): Task[Unit] = ???
     }
   }
+
+  val katherine: User = User("Katherine", "katherine-fu@outlook.com")
+  val message = "I don't even know man"
+
+  override def run(args: List[String]): URIO[Any with Console, ExitCode] =
+    UserMailer
+      .notify(katherine, message) // the kind of effect
+      .provideLayer(UserMailer.live) // provide the input for that effect
+      .exitCode // run
 }
 
 //package net.degoes.zio
