@@ -1,5 +1,6 @@
 package understandzio
 
+import understandzio.PlayGround.UserMailer.UserMailerEnv
 import zio.{ExitCode, Has, Task, URIO, ZIO, ZLayer}
 import zio.console._
 
@@ -47,8 +48,17 @@ object PlayGround extends zio.App {
       ZIO.accessM(_.get.insert(user))
   }
 
+  // Horizontal composition
+  // ZLayer[In1, Err1, Out1] ++ ZLayer[In2, Err2, Out2] => ZLayer[In1 with In2, super(Err1, Err2), Out1 with Out2]
+
   val katherine: User = User("Katherine", "katherine-fu@outlook.com")
   val message = "I don't even know man"
+
+  import UserDB._
+  import UserMailer._
+
+  val userBackendLayer: ZLayer[Any, Nothing, UserDBEnv with UserMailerEnv] =
+    UserDB.live ++ UserMailer.live
 
   override def run(args: List[String]): URIO[Any with Console, ExitCode] =
     UserMailer
