@@ -32,9 +32,19 @@ object PlayGround extends zio.App {
   }
 
   object UserDB {
+    type UserDBEnv = Has[UserDB.Service]
     trait Service {
-      def insert(user: User): Task[Unit] = ???
+      def insert(user: User): Task[Unit]
     }
+
+    val live = ZLayer.succeed(new Service {
+      override def insert(user: User): Task[Unit] = Task {
+        println(s"[Database] A dummy sql statement: ${user.email}")
+      }
+    })
+
+    def insert(user: User): ZIO[UserDBEnv, Throwable, Unit] =
+      ZIO.accessM(_.get.insert(user))
   }
 
   val katherine: User = User("Katherine", "katherine-fu@outlook.com")
